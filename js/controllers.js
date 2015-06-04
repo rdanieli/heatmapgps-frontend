@@ -38,12 +38,67 @@ angular.module('starter.controllers', ['starter.services', 'starter.factories'])
 
 })
 
-.controller('MapController', function($scope, $window, $ionicModal, MapFactory) {
+.controller('MapController', function($scope, $window, $ionicModal, MapFactory, OcorrenciaService) {
 
     $scope.startMap = function() {
-        var map = MapFactory.init();
+        OcorrenciaService.load(function(data) {
+            var map = MapFactory.init();
 
-        google.maps.event.addDomListener($window, 'load', map);
+            var pinIcon = new google.maps.MarkerImage(
+                "http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|CCCCAA",
+                null, /* size is determined at runtime */
+                null, /* origin is 0,0 */
+                null, /* anchor is bottom center of the scaled image */
+                new google.maps.Size(8, 8)
+            ); 
+
+            var points = [];
+
+            for (var i = 0; i < data.length; i++) {
+                var cor = JSON.parse(data[i].jsonLocal).coordinates;
+                console.log('lat:' + cor[1] + ',lng:' + cor[0]);
+
+                var latlng = new google.maps.LatLng(cor[1], cor[0]);
+
+                new google.maps.Marker({
+                        position: latlng,
+                        map: map,
+                        icon: pinIcon
+                    });
+
+                points.push(latlng);
+            };
+
+            var pointArray = new google.maps.MVCArray(points);
+
+            heatmap = new google.maps.visualization.HeatmapLayer({
+                data: pointArray
+            });
+
+            var gradient = [
+                'rgba(0, 255, 255, 0)',
+                'rgba(0, 255, 255, 1)',
+                'rgba(0, 191, 255, 1)',
+                'rgba(0, 127, 255, 1)',
+                'rgba(0, 63, 255, 1)',
+                'rgba(0, 0, 255, 1)',
+                'rgba(0, 0, 223, 1)',
+                'rgba(0, 0, 191, 1)',
+                'rgba(0, 0, 159, 1)',
+                'rgba(0, 0, 127, 1)',
+                'rgba(63, 0, 91, 1)',
+                'rgba(127, 0, 63, 1)',
+                'rgba(191, 0, 31, 1)',
+                'rgba(255, 0, 0, 1)'
+            ];
+
+            heatmap.set('gradient', gradient);
+            heatmap.set('radius', 100);
+
+            heatmap.setMap(map);
+
+            google.maps.event.addDomListener($window, 'load', map);
+        });
     }
 
     $ionicModal.fromTemplateUrl('my-modal.html', {
