@@ -6,6 +6,10 @@
 // 'starter.controllers' is found in controllers.js
 angular.module('starter', ['ionic', 'starter.controllers'])
 
+.constant('ApiEndpoint', {
+  url: 'http://localhost:8100/api'
+})
+
 .run(function($ionicPlatform, Auth) {
     $ionicPlatform.ready(function() {
         // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
@@ -22,7 +26,17 @@ angular.module('starter', ['ionic', 'starter.controllers'])
     
 })
 
-.config(function($stateProvider, $urlRouterProvider) {
+.config(function($stateProvider, $httpProvider, $urlRouterProvider) {
+    
+    // We need to setup some parameters for http requests
+    // These three lines are all you need for CORS support
+    
+    $httpProvider.defaults.useXDomain = true;
+
+    //Remove the header containing XMLHttpRequest used to identify ajax call 
+    //that would prevent CORS from working
+    delete $httpProvider.defaults.headers.common['X-Requested-With'];
+
     $stateProvider
         .state('login', {
             url: "/",

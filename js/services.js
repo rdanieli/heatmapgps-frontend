@@ -1,6 +1,7 @@
 angular.module('starter.services', ['base64'])
 
-.service('Auth', function($http, $q, $window, $base64) {
+.service('Auth', function($http, $q, $window, $base64, ApiEndpoint) {
+    console.log('ApiEndpoint', ApiEndpoint);
     return {
         hasUser: function() {
             return angular.fromJson($window.sessionStorage.currentUser).token != null;
@@ -18,20 +19,16 @@ angular.module('starter.services', ['base64'])
             $window.sessionStorage.currentUser = null
 
             if (credentials.username && credentials.password) {
-                var req = {
-                    method: 'POST',
-                    url: API_url + 'rest/usuarios/auth',
-                    headers: {
-                        'usr': $base64.encode(credentials.username),
-                        'pwd': $base64.encode(credentials.password)
-                    }
-                };
-
-                $http(req).success(function(data, status, headers, config) {
-                    $window.sessionStorage.currentUser = angular.toJson(data);
+                $http.defaults.headers.post["Content-Type"] = "multipart/form-data";
+                
+                $http.post(ApiEndpoint.url + '/rest/usuarios/auth', '', {headers: {
+                    'usr': $base64.encode(credentials.username),
+                    'pwd': $base64.encode(credentials.password)
+                }}).
+                then(function(response) {
+                    $window.sessionStorage.currentUser = angular.toJson(response.data);
                     callback();
-                }).
-                error(function(data, status, headers, config) {
+                }, function(response) {
                     console.log('Problemas ao autenticar usuario', data);
                     callback();
                 });
@@ -43,13 +40,13 @@ angular.module('starter.services', ['base64'])
     }
 })
 
-.service('OcorrenciaService', function($http, $q, $window) {
+.service('OcorrenciaService', function($http, $q, $window, ApiEndpoint) {
     return {
         load: function(callback) {
         	//colocar no header o token
             var req = {
                 method: 'GET',
-                url: API_url + 'rest/ocorrencias/pontosConvertidos'
+                url: ApiEndpoint.url + '/rest/ocorrencias/pontosConvertidos'
             };
 
             $http(req).success(function(data, status, headers, config) {
@@ -61,5 +58,3 @@ angular.module('starter.services', ['base64'])
         }
     }
 });
-
-var API_url = 'http://192.168.0.14:8080/hm/';
