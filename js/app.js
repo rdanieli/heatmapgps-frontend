@@ -7,7 +7,8 @@
 angular.module('starter', ['ionic', 'starter.controllers'])
 
 .constant('ApiEndpoint', {
-  url: 'http://localhost:8100/api'
+  //url: 'http://localhost:8100/api'
+  url: 'http://192.168.0.14:8080/hm'
 })
 
 .run(function($ionicPlatform, Auth) {
@@ -22,11 +23,9 @@ angular.module('starter', ['ionic', 'starter.controllers'])
             StatusBar.styleDefault();
         }
     });
-
-    
 })
 
-.config(function($stateProvider, $httpProvider, $urlRouterProvider) {
+.config(function($stateProvider, $httpProvider, $urlRouterProvider, $ionicConfigProvider) {
     
     // We need to setup some parameters for http requests
     // These three lines are all you need for CORS support
@@ -37,12 +36,15 @@ angular.module('starter', ['ionic', 'starter.controllers'])
     //that would prevent CORS from working
     delete $httpProvider.defaults.headers.common['X-Requested-With'];
 
+    $ionicConfigProvider.views.maxCache(0);
+
     $stateProvider
-        .state('login', {
-            url: "/",
-            templateUrl: "templates/login.html",
-            controller: 'LoginCtrl'
-        })
+    
+    .state('login', {
+        url: "/",
+        templateUrl: "templates/login.html",
+        controller: 'LoginCtrl'
+    })
 
     .state('menu', {
         abstract: true,
@@ -50,22 +52,12 @@ angular.module('starter', ['ionic', 'starter.controllers'])
         controller: 'MenuCtrl'
     })
 
-    .state('menu.playlists', {
-        url: "/playlists",
+    .state('menu.rota', {
+        url: "/rota",
         views: {
             'menuContent': {
-                templateUrl: "templates/playlists.html",
-                controller: 'PlaylistsCtrl'
-            }
-        }
-    })
-
-    .state('menu.single', {
-        url: "/playlists/:playlistId",
-        views: {
-            'menuContent': {
-                templateUrl: "templates/playlist.html",
-                controller: 'PlaylistCtrl'
+                templateUrl: "templates/rota.html",
+                controller: 'RotaController'
             }
         }
     })

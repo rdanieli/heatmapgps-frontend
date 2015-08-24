@@ -1,28 +1,62 @@
 <ion-view view-title="Mapa de Calor">
-  <ion-content ng-init="startMap()">
-    <div id="map"></div>
-    <div class="tabs">
-	  <a class="tab-item" ng-click="openModal()">
-	    Home
-	  </a>
-	  <a class="tab-item">
-	    Favorites
-	  </a>
-	  <a class="tab-item">
-	    Settings
-	  </a>
-	</div>
-	<script id="my-modal.html" type="text/ng-template">
-	  <ion-modal-view>
-	    <ion-header-bar>
-	      <h1 class="title">My Modal title</h1>
-	    </ion-header-bar>
-	    <ion-content>
-	      <button ng-click="closeModal()">
-	      Hello!
-	      </button>
-	    </ion-content>
-	  </ion-modal-view>
-	</script>
-  </ion-content>
+	<ion-content ng-init="startMap()">
+		<div id="map"></div>
+		<div class="tabs">
+			<a class="tab-item" ng-click="openModal()">Filtrar</a>
+		</div>
+
+		<script id="filtroHeatMap.html" type="text/ng-template">
+			<ion-modal-view>
+				<ion-header-bar>
+					<h1 class="title">Informe os critérios do Filtro</h1>
+				</ion-header-bar>
+				<ion-content>
+					<form ng-submit="submit(filter)">
+						<div class="list">
+							<label class="item item-input item-select">
+								<div class="input-label">Fato</div>
+								<select ng-model="filter.selectedFato">
+									<option value="">Selecione...</option>
+									<option ng:repeat="item in descricaoFatos" value="{{item}}">{{item}}</option>
+								</select>
+							</label>
+							<label class="item item-input item-select">
+								<div class="input-label">Bairro</div>
+								<select ng-model="filter.selectedBairroId">
+									<option value="">Selecione...</option>
+									<option ng:repeat="item in bairros" value="{{item.id}}">{{item.nome}}</option>
+								</select>
+							</label>
+							<label class="item item-input">
+							  <span class="input-label">Data Inicial</span>
+							  <input ng-model="filter.dtInicio" type="date">
+							</label>
+							<label class="item item-input">
+							  <span class="input-label">Data Final</span>
+							  <input ng-model="filter.dtFim" type="date">
+							</label>
+							<label class="item item-input">
+							  <span class="input-label">Hora Inicial</span>
+							  <input ng-model="filter.hrIni" type="time">
+							</label>
+							<label class="item item-input">
+							  <span class="input-label">Hora Final</span>
+							  <input ng-model="filter.hrFim" type="time">
+							</label>
+						</div>
+						
+						<div class="row">
+	          	<div class="col col-50">
+	          	<button type="button" ng-click="closeModal()" class="button button-full button-assertive">Fechar</button>
+	          	</div>
+	          	<div class="col col-50">
+	          	<button type="submit" class="button button-full button-balanced">OK</button>
+	          	</div>
+	          </div>
+	        </div>
+					</form>
+				</ion-content>
+			</ion-modal-view>
+		</script>
+	</ion-content>
 </ion-view>
