@@ -33,7 +33,7 @@ angular.module('starter.services', ['base64'])
                 });
             } else {
                 //ajustar pois está estorando erro
-                //callback();
+                callback('Informe usuário e senha!');
             }
         }
     }
@@ -56,7 +56,7 @@ angular.module('starter.services', ['base64'])
         }
     }
 })
-.service('OcorrenciaService', function($http, $q, $window, ApiEndpoint) {
+.service('OcorrenciaService', function($http, $q, $window, $base64, ApiEndpoint) {
     return {
         load: function(callback, filtro) {
         	var req;
@@ -96,6 +96,18 @@ angular.module('starter.services', ['base64'])
             error(function(data, status, headers, config) {
                 callback('erro');
             });  
-        }
+        },
+        
+        pontosRotaSol: function(user, callback) {
+            $http.post(ApiEndpoint.url + '/rest/ocorrencias/pontosBatalhaoUsuario', '', {headers: {
+                'login': $base64.encode(user.login),
+                'token': $base64.encode(user.token)
+            }}).
+            then(function(response) {
+                callback(response.data);
+            }, function(response) {
+                callback('Erro ao gerar rota!');
+            });
+        }        
     }
 });

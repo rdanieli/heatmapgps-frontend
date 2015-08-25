@@ -155,12 +155,17 @@ angular.module('starter.controllers', ['starter.services', 'starter.factories'])
 
 .controller('RotaController', function($scope,
                                        $window,
-                                       $ionicModal,
+                                       $ionicPopup,
                                        $state,
+                                       $ionicLoading,
                                        MapFactory,
                                        OcorrenciaService,
+                                       Auth,
                                        ApiEndpoint) {
     var watch = null;
+    var policeLocation = null;
+
+    //var sessionUser = Auth.getUser();
 
     $scope.$on('$ionicView.beforeLeave', function(){
         if(watch != null)
@@ -169,7 +174,6 @@ angular.module('starter.controllers', ['starter.services', 'starter.factories'])
 
     var reloadMap = function(data) {
         var map = MapFactory.init('mapRoute');
-        var policeLocation;
 
         watch = MapFactory.phonePosition(function(position){
             var pinIcon = new google.maps.MarkerImage(
@@ -180,7 +184,7 @@ angular.module('starter.controllers', ['starter.services', 'starter.factories'])
                 new google.maps.Size(72, 72)
             );
 
-            if(!policeLocation){
+            if(policeLocation == null){
                 policeLocation = new google.maps.Marker({
                    position: new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
                    map: map,
@@ -207,7 +211,7 @@ angular.module('starter.controllers', ['starter.services', 'starter.factories'])
                     reloadMap();     
                 } else {
                     alert("GPS deve estar ativo!\nAtive-o nas configurações do aparelho e tente novamente.");    
-                    $state.go('menu.map');
+                    $state.go('menu.map', {cache:true});
                 }
             }, function(error){
                 alert("The following error occurred: "+error);
@@ -216,4 +220,67 @@ angular.module('starter.controllers', ['starter.services', 'starter.factories'])
             reloadMap();
         }
     }
+
+    $scope.showPopup = function() {
+        
+        //GPS do aparelho deve estar Ligado
+
+        if(!policeLocation){
+            alert('Nenhuma posição de inicio válida encontrada.');
+            return;
+        }
+
+        navigator.geolocation.clearWatch(watch);
+
+        $scope.dataPop = {}
+
+        // An elaborate, custom popup
+        var myPopup = $ionicPopup.show({
+            template: '<input type="number" ng-model="dataPop.distancia">',
+            title: 'Distância da Rota',
+            subTitle: 'Informe em Quilômetros (KM)',
+            scope: $scope,
+            buttons: [{
+                text: 'Cancelar',
+                onTap: function(e) {
+                    myPopup.close();
+                }
+            }, {
+                text: '<b>Gerar</b>',
+                type: 'button-positive',
+                onTap: function(e) {
+                    if (!$scope.dataPop.distancia) {
+                        e.preventDefault();
+                    } else {
+                        return $scope.dataPop.distancia;
+                    }
+                }
+            }]
+        });
+
+        myPopup.then(function(res) {
+            if(res) {
+                $ionicLoading.show({
+                        content: 'Gerando Rota',
+                        showBackdrop: true,
+                        maxWidth: 200,
+                        showDelay: 0
+                    });
+
+                try {
+                    OcorrenciaService.pontosRotaSol(Auth.getUser(), function(data){
+                        
+                    });
+                }
+                finally {
+                    $ionicLoading.hide();
+                }
+            } else {
+                policeLocation = null;
+                reloadMap();
+            }
+
+        });
+    };
+
 });
