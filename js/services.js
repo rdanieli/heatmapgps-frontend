@@ -98,8 +98,12 @@ angular.module('starter.services', ['base64'])
             });  
         },
         
-        pontosRotaSol: function(user, callback) {
-            $http.post(ApiEndpoint.url + '/rest/ocorrencias/pontosBatalhaoUsuario', '', {headers: {
+        pontosRotaSol: function(user, lat, lng, distance, callback) {
+            $http.post(ApiEndpoint.url + '/rest/ocorrencias/pontosBatalhaoUsuario', {
+                'lat':lat,
+                'lng':lng,
+                'distance':distance
+            }, {headers: {
                 'login': $base64.encode(user.login),
                 'token': $base64.encode(user.token)
             }}).

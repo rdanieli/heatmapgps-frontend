@@ -159,11 +159,13 @@ angular.module('starter.controllers', ['starter.services', 'starter.factories'])
                                        $state,
                                        $ionicLoading,
                                        MapFactory,
+                                       RotaFactory,
                                        OcorrenciaService,
                                        Auth,
                                        ApiEndpoint) {
     var watch = null;
     var policeLocation = null;
+    var map = MapFactory.init('mapRoute');
 
     //var sessionUser = Auth.getUser();
 
@@ -173,8 +175,6 @@ angular.module('starter.controllers', ['starter.services', 'starter.factories'])
     });
 
     var reloadMap = function(data) {
-        var map = MapFactory.init('mapRoute');
-
         watch = MapFactory.phonePosition(function(position){
             var pinIcon = new google.maps.MarkerImage(
                 ApiEndpoint.url + "/img/car-pol.png",
@@ -268,8 +268,13 @@ angular.module('starter.controllers', ['starter.services', 'starter.factories'])
                     });
 
                 try {
-                    OcorrenciaService.pontosRotaSol(Auth.getUser(), function(data){
-                        
+                    OcorrenciaService.pontosRotaSol(Auth.getUser(), 
+                                                    //lat,log
+                                                    policeLocation.position.lat(),
+                                                    policeLocation.position.lng(),
+                                                    res, 
+                                                    function(data){
+                        RotaFactory.calculate(map, data, policeLocation);
                     });
                 }
                 finally {
