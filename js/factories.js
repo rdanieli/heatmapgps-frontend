@@ -34,80 +34,78 @@ angular.module('starter.factories', [])
 })
 
 .factory('RotaFactory', function(){
-    function init(map, ocorrencias, policeLocation) {
+    function init(map, ocorrencias, policeLocation, cb) {
         var directionsService = new google.maps.DirectionsService();
         //var directionsDisplay = new google.maps.DirectionsRenderer;
         //directionsDisplay.setMap(map);
 
         function calculateAndDisplayRoute(directionsService, 
                                           ocorrencias, 
-                                          policeLocation) {
-            var waypts = [];
-            
-            waypts.push({location:policeLocation.position});
-
-            var i = 0;
-
-            for (; i < ocorrencias.length; i++) {
-                var cor = JSON.parse(ocorrencias[i].jsonLocal).coordinates;
-
-                var latlng = new google.maps.LatLng(cor[1], cor[0]);
-
-                waypts.push({location:latlng});
-            }
-
-            i = 0;
-            ocorrencias = [];
-
-            for (; i < waypts.length; i+=9) {
+                                          policeLocation,
+                                          cb) {
+            if (ocorrencias.length > 0) {
+                var waypts = [];
                 
-                var src  = waypts[i].location;
-                var dest = waypts[Math.min(i+9, waypts.length-1)].location;
-                var way = waypts.slice(i+1,Math.min(i+9, waypts.length-1));
+                waypts.push({location:policeLocation.position});
 
-                directionsService.route({
-                    origin: src,
-                    destination: dest,
-                    waypoints: way,
-                    optimizeWaypoints: true,
-                    travelMode: google.maps.TravelMode.DRIVING
-                }, function(response, status) {
-                    if (status === google.maps.DirectionsStatus.OK) {
-                        var polyline = new google.maps.Polyline({
-                                      path: [],
-                                      strokeColor: '#FF0000',
-                                      strokeWeight: 3
-                                    });
-                        
-                        var bounds = new google.maps.LatLngBounds();
+                var i = 0;
 
-                        var legs = response.routes[0].legs;
-                        for (i=0;i<legs.length;i++) {
-                          var steps = legs[i].steps;
-                          for (j=0;j<steps.length;j++) {
-                            var nextSegment = steps[j].path;
-                            for (k=0;k<nextSegment.length;k++) {
-                              polyline.getPath().push(nextSegment[k]);
-                              bounds.extend(nextSegment[k]);
+                for (; i < ocorrencias.length; i++) {
+                    var cor = JSON.parse(ocorrencias[i].jsonLocal).coordinates;
+
+                    var latlng = new google.maps.LatLng(cor[1], cor[0]);
+
+                    waypts.push({location:latlng});
+                }
+
+                i = 0;
+                ocorrencias = [];
+
+                for (; i < waypts.length; i+=9) {
+                    
+                    var src  = waypts[i].location;
+                    var dest = waypts[Math.min(i+9, waypts.length-1)].location;
+                    var way = waypts.slice(i+1,Math.min(i+9, waypts.length-1));
+
+                    directionsService.route({
+                        origin: src,
+                        destination: dest,
+                        waypoints: way,
+                        //optimizeWaypoints: true,
+                        travelMode: google.maps.TravelMode.DRIVING
+                    }, function(response, status) {
+                        if (status === google.maps.DirectionsStatus.OK) {
+                            var polyline = []
+
+                            var legs = response.routes[0].legs;
+                            for (i=0;i<legs.length;i++) {
+                              var steps = legs[i].steps;
+                              for (j=0;j<steps.length;j++) {
+                                var nextSegment = steps[j].path;
+                                for (k=0;k<nextSegment.length;k++) {
+                                  polyline.push(nextSegment[k]);
+                                  //bounds.extend(nextSegment[k]);
+                                }
+                              }
                             }
-                          }
-                        }
 
-                        map.fitBounds(bounds);
-                        polyline.setMap(map);
-                    } else {
-                        window.alert('Directions request failed due to ' + status);
-                    }
-                });
+                            cb(polyline);
+                        } else {
+                            window.alert('Directions request failed due to ' + status);
+                        }
+                    });
+                }
+            } else {
+                cb('Nenhuma ocorrência encontrada para distância informada.');
             }
         };
 
-        calculateAndDisplayRoute(directionsService, ocorrencias, policeLocation);
+        calculateAndDisplayRoute(directionsService, ocorrencias, policeLocation, cb);
     };
 
     return {
-        calculate: function(map, data, policeLocation){
-            init(map, data, policeLocation);
+        calculate: function(map, data, policeLocation, cb){
+            init(map, data, policeLocation, cb);
         }
     }
 });

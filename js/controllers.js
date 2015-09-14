@@ -45,11 +45,14 @@ angular.module('starter.controllers', ['starter.services', 'starter.factories'])
 .controller('MapController', function($scope,
     $window,
     $ionicModal,
+    $ionicLoading,
     MapFactory,
     OcorrenciaService,
     BairroService) {
 
     var reloadMap = function(data) {
+        
+
         var map = MapFactory.init();
 
         var pinIcon = new google.maps.MarkerImage(
@@ -64,8 +67,6 @@ angular.module('starter.controllers', ['starter.services', 'starter.factories'])
 
         for (var i = 0; i < data.length; i++) {
             var cor = JSON.parse(data[i].jsonLocal).coordinates;
-            console.log('lat:' + cor[1] + ',lng:' + cor[0]);
-
             var latlng = new google.maps.LatLng(cor[1], cor[0]);
 
             //new google.maps.Marker({
@@ -112,9 +113,17 @@ angular.module('starter.controllers', ['starter.services', 'starter.factories'])
         heatmap.setMap(map);
 
         google.maps.event.addDomListener($window, 'load', map);
+
+        $ionicLoading.hide();
     };
 
     $scope.startMap = function() {
+        $ionicLoading.show({
+                    content: 'Carregando...',
+                    showBackdrop: true,
+                    maxWidth: 200,
+                    showDelay: 0
+                });
         OcorrenciaService.load(reloadMap);
     }
 
@@ -130,13 +139,22 @@ angular.module('starter.controllers', ['starter.services', 'starter.factories'])
     $scope.submit = function(filter) {
         OcorrenciaService.load(reloadMap, filter);
         $scope.closeModal();
+        $ionicLoading.show({
+                    content: 'Carregando...',
+                    showBackdrop: true,
+                    maxWidth: 200,
+                    showDelay: 0
+                });
     };
 
     $scope.openModal = function() {
-        OcorrenciaService.descricaoFatos(function(data){
-            $scope.descricaoFatos = data;
-        });
+        if(!$scope.descricaoFatos){
+            OcorrenciaService.descricaoFatos(function(data){
+                $scope.descricaoFatos = data;
+            });
+        }
 
+        if(!$scope.bairros)
         BairroService.todosBairros(function(data){
             $scope.bairros = data;
         });
@@ -166,6 +184,7 @@ angular.module('starter.controllers', ['starter.services', 'starter.factories'])
     var watch = null;
     var policeLocation = null;
     var map = MapFactory.init('mapRoute');
+    var polilynes = [];
 
     //var sessionUser = Auth.getUser();
 
@@ -175,32 +194,45 @@ angular.module('starter.controllers', ['starter.services', 'starter.factories'])
     });
 
     var reloadMap = function(data) {
-        watch = MapFactory.phonePosition(function(position){
-            var pinIcon = new google.maps.MarkerImage(
-                ApiEndpoint.url + "/img/car-pol.png",
-                null, /* size is determined at runtime */
-                null, /* origin is 0,0 */
-                null, /* anchor is bottom center of the scaled image */
-                new google.maps.Size(72, 72)
-            );
-
-            if(policeLocation == null){
-                policeLocation = new google.maps.Marker({
-                   position: new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
-                   map: map,
-                   icon: pinIcon
+        $ionicLoading.show({
+                    content: 'Carregando...',
+                    showBackdrop: true,
+                    maxWidth: 200,
+                    showDelay: 0
                 });
 
-                map.panTo(policeLocation.position);
-                map.setZoom(16);
 
-            } else {
-                policeLocation.setPosition(new google.maps.LatLng(position.coords.latitude, position.coords.longitude));
+        watch = MapFactory.phonePosition(function(position){
+            try{
+                var pinIcon = new google.maps.MarkerImage(
+                    ApiEndpoint.url + "/img/car-pol.png",
+                    null, /* size is determined at runtime */
+                    null, /* origin is 0,0 */
+                    null, /* anchor is bottom center of the scaled image */
+                    new google.maps.Size(72, 72)
+                );
+
+                if(policeLocation == null){
+                    policeLocation = new google.maps.Marker({
+                       position: new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
+                       map: map,
+                       icon: pinIcon
+                    });
+
+                    map.panTo(policeLocation.position);
+                    map.setZoom(16);
+
+                } else {
+                    policeLocation.setPosition(new google.maps.LatLng(position.coords.latitude, position.coords.longitude));
+                }
+            } finally {
+                $ionicLoading.hide();
             }
 
             //google.maps.event.addDomListener($window, 'load', map);
         }, function(error) {
-            console.log(error);
+            alert('Erro ao obter posição.');
+            $ionicLoading.hide();
         });
     };
 
@@ -232,10 +264,10 @@ angular.module('starter.controllers', ['starter.services', 'starter.factories'])
 
         navigator.geolocation.clearWatch(watch);
 
-        $scope.dataPop = {}
+        $scope.dataPop = {};
 
         // An elaborate, custom popup
-        var myPopup = $ionicPopup.show({
+        var myPopup = $ionicPopup.prompt({
             template: '<input type="number" ng-model="dataPop.distancia">',
             title: 'Distância da Rota',
             subTitle: 'Informe em Quilômetros (KM)',
@@ -249,6 +281,8 @@ angular.module('starter.controllers', ['starter.services', 'starter.factories'])
                 text: '<b>Gerar</b>',
                 type: 'button-positive',
                 onTap: function(e) {
+                    
+
                     if (!$scope.dataPop.distancia) {
                         e.preventDefault();
                     } else {
@@ -267,25 +301,76 @@ angular.module('starter.controllers', ['starter.services', 'starter.factories'])
                         showDelay: 0
                     });
 
-                try {
-                    OcorrenciaService.pontosRotaSol(Auth.getUser(), 
-                                                    //lat,log
-                                                    policeLocation.position.lat(),
-                                                    policeLocation.position.lng(),
-                                                    res, 
-                                                    function(data){
-                        RotaFactory.calculate(map, data, policeLocation);
-                    });
-                }
-                finally {
-                    $ionicLoading.hide();
-                }
+                chamaCac(res);
             } else {
                 policeLocation = null;
                 reloadMap();
             }
 
         });
+
+        function chamaCac(res) {
+            for (var i = 0; i < polilynes.length; i++) {
+                polilynes[i].setMap(null);
+            };
+
+            polilynes = [];
+
+            OcorrenciaService.pontosRotaSol(Auth.getUser(), 
+                                            //lat,log
+                                            policeLocation.position.lat(),
+                                            policeLocation.position.lng(),
+                                            res, 
+                                            function(data){
+                RotaFactory.calculate(map, data, policeLocation, function(p){
+                    try{
+                        if(typeof p === 'string') {
+                            $ionicLoading.hide();
+
+                            var alertPopup = $ionicPopup.alert({
+                             title: 'Info',
+                             template: p
+                           });
+                           alertPopup.then(function(res) {
+                             policeLocation = null;
+                             reloadMap();
+                           });
+                        } else {
+                           //add array
+                           var lineSymbol = {
+                                path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                                fillOpacity: 1,
+                                scale: 3
+                            };
+
+                            var polyline = new google.maps.Polyline({
+                                              path: [],
+                                              strokeColor: '#666461',
+                                              strokeWeight: 3,
+                                              icons: [{
+                                                    icon: lineSymbol,
+                                                    offset: '100%',
+                                                    repeat: '40px'
+                                                }]
+                                            });
+                            var bounds = new google.maps.LatLngBounds();
+
+                            polilynes.push(polyline);
+
+                            for (var x = 0; x < p.length; x++) {
+                                polyline.getPath().push(p[x]);
+                                bounds.extend(p[x]);
+                            };
+
+                            map.fitBounds(bounds);
+                            polyline.setMap(map);
+                        }
+                    } finally {
+                        $ionicLoading.hide();
+                    }
+                });
+            });
+        }
     };
 
 });

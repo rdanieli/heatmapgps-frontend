@@ -22,7 +22,7 @@ angular.module('starter.services', ['base64'])
                 //$http.defaults.headers.post["Content-Type"] = "multipart/form-data";
                 
                 $http.post(ApiEndpoint.url + '/rest/usuarios/auth', '', {headers: {
-                    'usr': $base64.encode(credentials.username),
+                    'usr': $base64.encode(credentials.username.toLowerCase()),
                     'pwd': $base64.encode(credentials.password)
                 }}).
                 then(function(response) {
