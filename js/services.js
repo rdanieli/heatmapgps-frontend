@@ -103,7 +103,8 @@ angular.module('starter.services', ['base64'])
                 'lat':lat,
                 'lng':lng,
                 'distance':distance
-            }, {headers: {
+            }, 
+            {headers: {
                 'login': $base64.encode(user.login),
                 'token': $base64.encode(user.token)
             }}).

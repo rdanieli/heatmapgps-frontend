@@ -7,8 +7,9 @@
 angular.module('starter', ['ionic', 'starter.controllers'])
 
 .constant('ApiEndpoint', {
-  url: 'http://localhost:8100/api'
+  //url: 'http://localhost:8100/api'
   //url: 'http://192.168.0.14:8080/hm'
+  url: 'http://159.203.86.79:8080/hm'
 })
 
 .run(function($ionicPlatform, Auth) {
